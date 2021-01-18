@@ -49,9 +49,9 @@ else
     fi
 fi
 
-#cd $wip_pkgsrc_dir/wip-tools
-#$make -DBATCH deinstall distclean reinstall
-#$make distclean
+cd $wip_pkgsrc_dir/wip-tools
+$make -DBATCH deinstall distclean reinstall
+$make distclean
 
 cat << EOM
 
