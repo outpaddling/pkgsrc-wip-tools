@@ -1,0 +1,64 @@
+#!/bin/sh -e
+
+PKGSRCDIR=$(auto-pkgsrc-dir)
+wip_pkgsrc_dir=$PKGSRCDIR/wip
+
+# wip-poudriere-test needs access from non-root account
+umask 022
+
+if [ ! -e $wip_pkgsrc_dir ]; then
+    printf "No $wip_pkgsrc_dir directory.  Aborting...\n"
+    exit 1
+else
+    cd $wip_pkgsrc_dir
+    
+    if [ -e .git ]; then
+	if git status | awk '{ print $1 }' | grep '^modified'; then
+	    printf 'Modified files may cause conflicts when updating:\n'
+	    git status
+	    read -p 'Update anyway? y/[n] ' update
+	    if [ 0$update != 0y ]; then
+		exit
+	    fi
+	fi
+    else
+	printf "$0: $wip_pkgsrc_dir is not a git repository.\n"
+	exit 1
+    fi
+    
+    # Temporary replacement for clean-all during transition
+    printf "Cleaning...\n"
+    cd $wip_pkgsrc_dir
+    make=$(pkgsrc-make)
+    for dir in *; do
+	if [ -d $dir/work ]; then
+	    cd $dir
+	    pwd
+	    $make clean
+	    cd ..
+	fi
+    done
+    
+    find . -name '.*.bak' -exec rm '{}' \;
+
+    if [ -e .git ]; then
+	git pull
+    else
+	printf "This is neither a subversion nor a git repository.\n"
+	exit 1
+    fi
+fi
+
+#cd $wip_pkgsrc_dir/wip-tools
+#$make -DBATCH deinstall distclean reinstall
+#$make distclean
+
+cat << EOM
+
+*********************************************************
+You can now install any of the packages added above using:
+
+cd $wip_pkgsrc_dir/<pkgname>
+$make install
+*********************************************************
+EOM
