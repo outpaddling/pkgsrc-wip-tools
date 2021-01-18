@@ -1,2 +1,2 @@
 # pkgsrc-wip-tools
-Tools for developing pkgsrc hip packages
+Tools for developing pkgsrc wip packages
