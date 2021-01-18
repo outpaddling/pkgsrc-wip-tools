@@ -50,7 +50,8 @@ else
 fi
 
 cd $wip_pkgsrc_dir/pkgsrc-wip-tools
-$make deinstall distclean reinstall
+$make deinstall distclean
+$make reinstall
 $make distclean
 
 cat << EOM
