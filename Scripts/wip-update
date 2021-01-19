@@ -49,7 +49,7 @@ else
     fi
 fi
 
-cd $wip_pkgsrc_dir/pkgsrc-wip-tools
+cd $wip_pkgsrc_dir/wip-tools
 $make deinstall distclean
 $make reinstall
 $make distclean
