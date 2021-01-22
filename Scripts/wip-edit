@@ -1,0 +1,70 @@
+#!/bin/sh -e
+
+##########################################################################
+#   Script description:
+#       Edit all components of a new wip package and test in logical order
+#       
+#   History:
+#   Date        Name        Modification
+#   2021-01-22  Jason Bacon Adapt from FreeBSD
+##########################################################################
+
+usage()
+{
+    printf "Usage: $0 [package]\n"
+    exit 1
+}
+
+
+##########################################################################
+#   Main
+##########################################################################
+
+case $# in
+0)
+    ;;
+1)
+    cd $(auto-pkgsrc-dir)/wip/$1
+    ;;
+*)
+    usage
+esac
+
+if [ -z $EDITOR ]; then
+    EDITOR=vi
+fi
+for file in DESCR Makefile; do
+    $EDITOR $file
+done
+case $(auto-ostype) in
+NetBSD|RHEL)
+    fmt -g 77 -w 78 DESCR > DESCR.temp
+    mv -v DESCR.temp DESCR
+    ;;
+
+*)
+    cat << EOM
+The fmt command is not well standardized.  Add a case for $(auto-ostype)
+if you want to automatically format DESCR here.
+EOM
+    ;;
+esac
+
+make=$(pkgsrc-make)
+$make makesum
+$make clean install
+if [ -e ../.git ]; then
+    printf "Add to repo? y/[n] "
+    read add
+    if [ 0$add = 0y ]; then
+	$make clean
+	git add .
+    else
+	printf "$(dirname ..) is not under a git repository.\n"
+    fi
+fi
+printf "Run pkg-remake? y/[n] "
+read remake
+if [ 0$remake = 0y ]; then
+    pkg-remake
+fi
