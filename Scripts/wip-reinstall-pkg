@@ -86,7 +86,9 @@ for pkgname in $@; do
 	$make clean
     fi
     
-    $make deinstall
-    $make clean
-    $make $make_flags reinstall
+    $make
+    pkg_dir=`pwd | awk -F / '{ printf("%s/%s", $(NF-1), $NF); }'`
+    pkgbase=`auto-print-make-variable $pkg_dir PKGBASE`
+    pkg_delete -f $pkgbase
+    $make $make_flags reinstall clean
 done
