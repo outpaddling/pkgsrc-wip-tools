@@ -1,0 +1,103 @@
+#!/bin/sh -e
+
+##########################################################################
+#   Script description:
+#       Sync a wip package to an existing pkgsrc package
+#       
+#   History:
+#   Date        Name        Modification
+#   2020-07-23  ,,,         Begin
+##########################################################################
+
+usage()
+{
+    printf "Usage: $0 pkg category\n"
+    exit 1
+}
+
+
+##########################################################################
+#   Function description:
+#       Pause until user presses return
+##########################################################################
+
+pause()
+{
+    local junk
+    
+    printf "Press return to continue..."
+    read junk
+}
+
+
+cvs_status()
+{
+    cvs -q status | grep '^[?F]' | grep -v 'Up-to-date'
+    pause
+    cvs -q diff -u | more
+    pause
+}
+
+
+##########################################################################
+#   Main
+##########################################################################
+
+if [ $# != 2 ]; then
+    usage
+fi
+pkg=$(echo $1 | sed -e 's|/||')
+category=$2
+
+cd $(auto-pkgsrc-dir)/wip
+if [ $(basename $(pwd)) != wip ]; then
+    printf "$0: You must be in the wip directory.\n"
+    exit 1
+fi
+
+if [ ! -d $pkg ]; then
+    printf "$0: ${pkg}: No such wip package.\n"
+    exit 1
+fi
+
+if [ ! -d ../$category ]; then
+    printf "$0: ${category}: Not a directory.\n"
+    exit 1
+fi
+
+rsync -av --delete --exclude CVS --exclude work $pkg ../$category
+cd ../$category/$pkg
+vi Makefile
+test -e buildlink3.mk && vi buildlink3.mk
+for file in $(fgrep -lw wip *); do
+    printf "Editing $file, which contains wip reference.\n"
+    pause
+    vi $file
+done
+
+pwd
+cvs_status
+
+printf "Checking for new and deleted files...\n"
+new=$(cvs -q status | grep '^[?F]' | grep -v 'Up-to-date' | awk '$1 == "?" { print $2 }')
+for file in $new; do
+    read -p "Add file/directory \"$file\"? y/[n] " add
+    if [ 0$add = 0y ]; then
+	find $file -exec cvs add '{}' \;
+    fi
+done
+
+removed=$(cvs -q status | grep '^[?F]' | grep -v 'Up-to-date' | awk '$1 == "!" { print $2 }')
+for file in $removed; do
+    read -p "Remove file/directory \"$file\"? y/[n] " remove
+    if [ 0$add = 0y ]; then
+	find -d $file -exec cvs remove '{}' \;
+    fi
+done
+
+if [ ! -z $new ] && [ -z $removed ]; then
+    cvs_status
+fi
+
+pause
+pkg-check
