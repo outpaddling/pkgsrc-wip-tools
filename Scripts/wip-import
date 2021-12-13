@@ -51,7 +51,7 @@ category=$2
 
 cd $(auto-pkgsrc-dir)/wip
 if [ $(basename $(pwd)) != wip ]; then
-    printf "$0: You must be in the wip directory.\n"
+    printf "$0: Cannot cd to wip directory.\n"
     exit 1
 fi
 
@@ -63,6 +63,18 @@ fi
 if [ ! -d ../$category ]; then
     printf "$0: ${category}: Not a directory.\n"
     exit 1
+fi
+
+read -p "OK to update ports trees? y/[n] " update_ports
+if [ 0$"update_ports" = 0y ]; then
+    save_cwd=$(pwd)
+    cd $(auto-pkgsrc-dir)
+    cvs -q up -dP
+    cd wip
+    git pull
+    cd $save_pwd
+else
+    exit
 fi
 
 rsync -av --delete --exclude CVS --exclude work $pkg ../$category
