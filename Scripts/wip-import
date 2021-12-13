@@ -66,13 +66,13 @@ if [ ! -d ../$category ]; then
 fi
 
 read -p "OK to update ports trees? y/[n] " update_ports
-if [ 0$"update_ports" = 0y ]; then
+if [ 0"$update_ports" = 0y ]; then
     save_cwd=$(pwd)
     cd $(auto-pkgsrc-dir)
     cvs -q up -dP
     cd wip
     git pull
-    cd $save_pwd
+    cd $save_cwd
 else
     exit
 fi
