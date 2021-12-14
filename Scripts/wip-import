@@ -65,17 +65,23 @@ if [ ! -d ../$category ]; then
     exit 1
 fi
 
-read -p "OK to update ports trees? y/[n] " update_ports
-if [ 0"$update_ports" = 0y ]; then
+read -p "[U]pdate pkgsrc and wip trees [S]kip update [C]ancel " update_pkgsrc
+case "$update_pkgsrc" in
+U|u)
     save_cwd=$(pwd)
     cd $(auto-pkgsrc-dir)
     cvs -q up -dP
     cd wip
     git pull
     cd $save_cwd
-else
+    ;;
+
+S|s)
+    ;;
+
+C|c)
     exit
-fi
+esac
 
 rsync -av --delete --exclude CVS --exclude work $pkg ../$category
 cd ../$category/$pkg
