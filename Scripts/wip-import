@@ -49,6 +49,8 @@ fi
 pkg=$(echo $1 | sed -e 's|/||')
 category=$2
 
+: ${EDITOR:=vi}
+
 cd $(auto-pkgsrc-dir)/wip
 if [ $(basename $(pwd)) != wip ]; then
     printf "$0: Cannot cd to wip directory.\n"
@@ -79,18 +81,24 @@ U|u)
 S|s)
     ;;
 
-C|c)
+*)
     exit
 esac
 
 rsync -av --delete --exclude CVS --exclude work $pkg ../$category
 cd ../$category/$pkg
-vi Makefile
-test -e buildlink3.mk && vi buildlink3.mk
-for file in $(fgrep -lw wip *); do
-    printf "Editing $file, which contains wip reference.\n"
-    pause
-    vi $file
+
+printf "Visually inspect files and make adjustments.\n"
+pause
+for file in Makefile DESCR buildlink3.mk; do
+    if [ -e $file ]; then
+	$EDITOR $file
+	while fgrep -lw wip $file; do
+	    printf "Editing $file, which contains wip reference.\n"
+	    pause
+	    $EDITOR $file
+	done
+    fi
 done
 
 pwd
@@ -118,4 +126,7 @@ if [ ! -z $new ] && [ -z $removed ]; then
 fi
 
 pause
+if ! which pkg-check; then
+    wip-reinstall-port -u -r port-dev
+fi
 pkg-check
