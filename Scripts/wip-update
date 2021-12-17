@@ -49,11 +49,17 @@ else
     fi
 fi
 
-cd $wip_pkgsrc_dir/wip-tools
-$make deinstall distclean
-$make reinstall
-$make distclean
-
+pkg=$(pkg_info -X wip-tools | awk -F = '$1 == "PKGNAME" { print $2 }')
+installed_version=${pkg##*-}
+pkg_version=$(auto-print-make-variable wip/wip-tools PKGVERSION)
+if [ "$installed_version" != "$pkg_version" ]; then
+    cd $wip_pkgsrc_dir/wip-tools
+    $make deinstall distclean
+    $make reinstall
+    $make distclean
+else
+    printf "wip-tools is up-to-date.\n"
+fi
 cat << EOM
 
 *********************************************************
