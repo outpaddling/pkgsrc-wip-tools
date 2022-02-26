@@ -72,9 +72,9 @@ case "$update_pkgsrc" in
 U|u)
     save_cwd=$(pwd)
     cd $(auto-pkgsrc-dir)
-    cvs -q up -dP
+    cvs -q up -dP || true
     cd wip
-    git pull
+    git pull || true
     cd $save_cwd
     ;;
 
