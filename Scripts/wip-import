@@ -32,7 +32,7 @@ pause()
 
 cvs_status()
 {
-    cvs -q status | grep '^[?F]' | grep -v 'Up-to-date'
+    cvs -q status | grep '^[?F]' | grep -v 'Up-to-date' || true
     pause
     cvs -q diff -u | more
     pause
