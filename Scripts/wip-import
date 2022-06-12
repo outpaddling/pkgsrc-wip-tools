@@ -85,6 +85,11 @@ S|s)
     exit
 esac
 
+if [ ! -e ../$category/$pkg ]; then
+    new_pkg=yes
+else
+    new_pkg=no
+fi
 rsync -av --delete --exclude CVS --exclude work $pkg ../$category
 cd ../$category/$pkg
 
@@ -102,27 +107,38 @@ for file in Makefile DESCR buildlink3.mk; do
 done
 
 pwd
-cvs_status
-
-printf "Checking for new and deleted files...\n"
-new=$(cvs -q status | grep '^[?F]' | grep -v 'Up-to-date' | awk '$1 == "?" { print $2 }')
-for file in $new; do
-    read -p "Add file/directory \"$file\"? y/[n] " add
-    if [ 0$add = 0y ]; then
-	find $file -exec cvs add '{}' \;
+if [ $new_pkg = yes ]; then
+    printf "Add $category/$pkg? [y]/n "
+    read add
+    if [ 0"$add" != 0n ]; then
+	cd ..
+	cvs add $pkg
+	cd $pkg
+	find . \! -name CVS -and \! -name . -exec cvs add '{}' \;
     fi
-done
-
-removed=$(cvs -q status | grep '^[?F]' | grep -v 'Up-to-date' | awk '$1 == "!" { print $2 }')
-for file in $removed; do
-    read -p "Remove file/directory \"$file\"? y/[n] " remove
-    if [ 0$add = 0y ]; then
-	find -d $file -exec cvs remove '{}' \;
-    fi
-done
-
-if [ ! -z $new ] && [ -z $removed ]; then
+else
     cvs_status
+    printf "Checking for new and deleted files...\n"
+    
+    new=$(cvs -q status | grep '^[?F]' | grep -v 'Up-to-date' | awk '$1 == "?" { print $2 }')
+    for file in $new; do
+	read -p "Add file/directory \"$file\"? y/[n] " add
+	if [ 0$add = 0y ]; then
+	    find $file -exec cvs add '{}' \;
+	fi
+    done
+    
+    removed=$(cvs -q status | grep '^[?F]' | grep -v 'Up-to-date' | awk '$1 == "!" { print $2 }')
+    for file in $removed; do
+	read -p "Remove file/directory \"$file\"? y/[n] " remove
+	if [ 0$add = 0y ]; then
+	    find -d $file -exec cvs remove '{}' \;
+	fi
+    done
+
+    if [ ! -z $new ] && [ -z $removed ]; then
+	cvs_status
+    fi
 fi
 
 pause
