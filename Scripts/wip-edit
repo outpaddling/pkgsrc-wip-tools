@@ -37,15 +37,16 @@ for file in DESCR Makefile; do
     $EDITOR $file
 done
 case $(auto-ostype) in
-NetBSD|RHEL)
-    fmt -g 77 -w 78 DESCR > DESCR.temp
+NetBSD)
+    fmt -g 70 -w 72 DESCR > DESCR.temp
     mv -v DESCR.temp DESCR
     ;;
 
 *)
     cat << EOM
-The fmt command is not well standardized.  Add a case for $(auto-ostype)
-if you want to automatically format DESCR here.
+The fmt command is not well standardized and is wonky on Alma 8.
+Add a case for $(auto-ostype) if you want to automatically format
+DESCR here.
 EOM
     ;;
 esac
