@@ -67,6 +67,12 @@ if [ ! -d ../$category ]; then
     exit 1
 fi
 
+printf "Did you run wip-check-deps or otherwise verify all dependents? y/[n] "
+read resp
+if [ 0$resp != 0y ]; then
+    exit
+fi
+
 read -p "[U]pdate pkgsrc and wip trees [S]kip update [C]ancel " update_pkgsrc
 case "$update_pkgsrc" in
 U|u)
@@ -142,9 +148,9 @@ else
 fi
 
 pause
-if ! which pkg-check; then
-    wip-reinstall-port -u -r port-dev
-fi
+pkg_dir=`pwd | awk -F / '{ printf("%s/%s", $(NF-1), $NF); }'`
+pkgbase=`auto-print-make-variable $pkg_dir PKGBASE`
+pkg_delete -f $pkgbase
 pkg-check
 
 printf "Run pkg-commit $category/$pkg? [y]/n "
