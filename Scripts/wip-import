@@ -32,9 +32,9 @@ pause()
 
 cvs_status()
 {
-    cvs -q status | grep '^[?F]' | grep -v 'Up-to-date' || true
+    cvs -q status 2> /dev/null | grep '^[?F]' | grep -v 'Up-to-date' || true
     pause
-    cvs -q diff -u | more
+    cvs -q diff -u 2> /dev/null | more
     pause
 }
 
@@ -126,7 +126,7 @@ else
     cvs_status
     printf "Checking for new and deleted files...\n"
     
-    new=$(cvs -q status | grep '^[?F]' | grep -v 'Up-to-date' | awk '$1 == "?" { print $2 }')
+    new=$(cvs -q status 2> /dev/null | grep '^[?F]' | grep -v 'Up-to-date' | awk '$1 == "?" { print $2 }')
     for file in $new; do
 	read -p "Add file/directory \"$file\"? y/[n] " add
 	if [ 0$add = 0y ]; then
@@ -134,7 +134,8 @@ else
 	fi
     done
     
-    removed=$(cvs -q status | grep '^[?F]' | grep -v 'Up-to-date' | awk '$1 == "!" { print $2 }')
+    removed=$(cvs -q status 2> /dev/null | grep '^File.*Needs Checkout' | awk '$1 == "File:" { print $4 }')
+    printf "Removed files: $removed\n"
     for file in $removed; do
 	read -p "Remove file/directory \"$file\"? y/[n] " remove
 	if [ 0$add = 0y ]; then
