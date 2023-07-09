@@ -138,7 +138,7 @@ else
     printf "Removed files: $removed\n"
     for file in $removed; do
 	read -p "Remove file/directory \"$file\"? y/[n] " remove
-	if [ 0$add = 0y ]; then
+	if [ 0$remove = 0y ]; then
 	    find -d $file -exec cvs remove '{}' \;
 	fi
     done
@@ -151,7 +151,8 @@ fi
 pause
 pkg_dir=`pwd | awk -F / '{ printf("%s/%s", $(NF-1), $NF); }'`
 pkgbase=`auto-print-make-variable $pkg_dir PKGBASE`
-pkg_delete -f $pkgbase
+# Why was this here? I think pkg-check takes care of this now.
+# pkg_delete -f $pkgbase
 pkg-check
 
 printf "Run pkg-commit $category/$pkg? [y]/n "
