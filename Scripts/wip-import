@@ -130,18 +130,21 @@ else
     for file in $new; do
 	read -p "Add file/directory \"$file\"? y/[n] " add
 	if [ 0$add = 0y ]; then
-	    find $file -exec cvs add '{}' \;
+	    find . -name $file -exec cvs add '{}' \;
 	fi
     done
     
     removed=$(cvs -q status 2> /dev/null | grep '^File.*Needs Checkout' | awk '$1 == "File:" { print $4 }')
     printf "Removed files: $removed\n"
+    # Restore removed files so "find" can find them and properly remove them
+    cvs -q up -dP
     for file in $removed; do
 	read -p "Remove file/directory \"$file\"? y/[n] " remove
 	if [ 0$remove = 0y ]; then
-	    find -d $file -exec cvs remove '{}' \;
+	    find . -name $file -print -exec rm '{}' \; -exec cvs remove '{}' \;
 	fi
     done
+    cvs_status
 
     if [ ! -z $new ] && [ -z $removed ]; then
 	cvs_status
