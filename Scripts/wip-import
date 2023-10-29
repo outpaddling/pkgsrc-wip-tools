@@ -152,11 +152,16 @@ else
 fi
 
 pause
-pkg_dir=`pwd | awk -F / '{ printf("%s/%s", $(NF-1), $NF); }'`
-pkgbase=`auto-print-make-variable $pkg_dir PKGBASE`
+
 # Why was this here? I think pkg-check takes care of this now.
+# pkg_dir=`pwd | awk -F / '{ printf("%s/%s", $(NF-1), $NF); }'`
+# pkgbase=`auto-print-make-variable $pkg_dir PKGBASE`
 # pkg_delete -f $pkgbase
-pkg-check
+printf "Run pkg-check? [y]/n "
+read check
+if [ 0$check != 0n ]; then
+    pkg-check
+fi
 
 printf "Run pkg-commit $category/$pkg? [y]/n "
 read commit
