@@ -62,17 +62,17 @@ done
 
 PKGSRCDIR=$(auto-pkgsrc-dir)
 
-if [ x$update = x ]; then
-    printf "Run wip-update first? y/[n] "
+if [ 0$update = 0 ]; then
+    printf "Run wip-update first? [y]/n "
     read update
 fi
 
-if [ x$remove = x ]; then
+if [ 0$remove = 0 ]; then
     printf "Remove distfile? y/[n] "
     read remove
 fi
 
-if [ x$update = x'y' ]; then
+if [ 0$update != 0n ]; then
     cd
     wip-update
 fi
@@ -80,7 +80,7 @@ fi
 make=$(pkgsrc-make)
 for pkgname in $@; do
     cd $PKGSRCDIR/wip/$pkgname
-    if [ x$remove = xy ]; then
+    if [ 0$remove = 0y ]; then
 	$make distclean
     else
 	$make clean
