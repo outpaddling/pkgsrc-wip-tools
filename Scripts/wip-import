@@ -98,6 +98,7 @@ else
 fi
 rsync -av --delete --exclude CVS --exclude work $pkg ../$category
 cd ../$category/$pkg
+rm -f COMMIT_MSG TODO
 
 printf "Visually inspect files and make adjustments.\n"
 pause
@@ -126,12 +127,21 @@ else
     cvs_status
     printf "Checking for new and deleted files...\n"
     
-    new=$(cvs -q status 2> /dev/null | grep '^[?F]' | grep -v 'Up-to-date' | awk '$1 == "?" { print $2 }')
-    for file in $new; do
-	read -p "Add file/directory \"$file\"? y/[n] " add
-	if [ 0$add = 0y ]; then
-	    cvs add $file
-	fi
+    # cvs status does not show files in unadded directories
+    # so repeat after adding directories
+    again=yes
+    while [ $again = yes ]; do
+	again=no
+	new=$(cvs -q status 2> /dev/null | grep '^[?F]' | grep -v 'Up-to-date' | awk '$1 == "?" { print $2 }')
+	for file in $new; do
+	    read -p "Add file/directory \"$file\"? y/[n] " add
+	    if [ 0$add = 0y ]; then
+		cvs add $file
+		if [ -d $file ]; then
+		    again=yes
+		fi
+	    fi
+	done
     done
     
     removed=$(cvs -q status 2> /dev/null | grep '^File.*Needs Checkout' | awk '$1 == "File:" { print $4 }')
