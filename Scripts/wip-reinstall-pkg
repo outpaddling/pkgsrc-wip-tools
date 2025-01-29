@@ -81,14 +81,14 @@ make=$(pkgsrc-make)
 for pkgname in $@; do
     cd $PKGSRCDIR/wip/$pkgname
     if [ 0$remove = 0y ]; then
-	$make distclean
+	$make distclean clean-depends
     else
-	$make clean
+	$make clean clean-depends
     fi
     
     $make
     pkg_dir=`pwd | awk -F / '{ printf("%s/%s", $(NF-1), $NF); }'`
     pkgbase=`auto-print-make-variable $pkg_dir PKGBASE`
     pkg_delete -f $pkgbase
-    $make $make_flags reinstall clean
+    $make $make_flags reinstall clean clean-depends
 done
