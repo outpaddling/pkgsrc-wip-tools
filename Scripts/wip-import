@@ -73,14 +73,27 @@ if [ 0$resp != 0y ]; then
     exit
 fi
 
+if [ -e CVS ]; then
+    vcs=cvs
+elif [ -e .git ]; then
+    vcs=git
+else
+    printf "Not a cvs or git repo.\n"
+    exit 1
+fi
+
 read -p "[U]pdate pkgsrc and wip trees [S]kip update [C]ancel " update_pkgsrc
 case "$update_pkgsrc" in
 U|u)
     save_cwd=$(pwd)
     cd $(auto-pkgsrc-dir)
-    cvs -q up -dP || true
+    if [ $vcs = cvs ]; then
+	cvs -q up -dP || true
+    else
+	git pull -r
+    fi
     cd wip
-    git pull || true
+    git pull -r || true
     cd $save_cwd
     ;;
 
@@ -113,13 +126,16 @@ for file in Makefile DESCR buildlink3.mk; do
     fi
 done
 
-pwd
 if [ 0$new_pkg = 0yes ]; then
     printf "Add $category/$pkg? [y]/n "
     read add
     if [ 0$add != 0n ]; then
 	cd ..
-	cvs add $pkg
+	if [ $vcs = cvs ]; then
+	    cvs add $pkg
+	else
+	    git add $pkg
+	fi
 	cd $pkg
 	find . \! -name CVS -and \! -name . -exec cvs add '{}' \;
     fi
@@ -127,41 +143,52 @@ else
     cvs_status
     printf "Checking for new and deleted files...\n"
     
-    # cvs status does not show files in unadded directories
-    # so repeat after adding directories
-    again=yes
-    while [ $again = yes ]; do
-	again=no
-	new=$(cvs -q status 2> /dev/null | grep '^[?F]' | grep -v 'Up-to-date' | awk '$1 == "?" { print $2 }')
-	for file in $new; do
-	    read -p "Add file/directory \"$file\"? y/[n] " add
-	    if [ 0$add = 0y ]; then
-		cvs add $file
-		if [ -d $file ]; then
-		    again=yes
+    if [ $vcs = cvs ]; then
+	# cvs status does not show files in unadded directories
+	# so repeat after adding directories
+	again=yes
+	while [ $again = yes ]; do
+	    again=no
+	    new=$(cvs -q status 2> /dev/null | grep '^[?F]' | grep -v 'Up-to-date' | awk '$1 == "?" { print $2 }')
+	    for file in $new; do
+		read -p "Add file/directory \"$file\"? y/[n] " add
+		if [ 0$add = 0y ]; then
+		    cvs add $file
+		    if [ -d $file ]; then
+			again=yes
+		    fi
 		fi
+	    done
+	done
+	
+	removed=$(cvs -q status 2> /dev/null | grep '^File.*Needs Checkout' | awk '$1 == "File:" { print $4 }')
+	printf "Removed files: $removed\n"
+	# Restore removed files so "find" can find them and properly remove them
+	cvs -q up -dP
+	for file in $removed; do
+	    read -p "Remove file/directory \"$file\"? y/[n] " remove
+	    if [ 0$remove = 0y ]; then
+		find . -name $file -print -exec rm '{}' \; -exec cvs remove '{}' \;
 	    fi
 	done
-    done
-    
-    removed=$(cvs -q status 2> /dev/null | grep '^File.*Needs Checkout' | awk '$1 == "File:" { print $4 }')
-    printf "Removed files: $removed\n"
-    # Restore removed files so "find" can find them and properly remove them
-    cvs -q up -dP
-    for file in $removed; do
-	read -p "Remove file/directory \"$file\"? y/[n] " remove
-	if [ 0$remove = 0y ]; then
-	    find . -name $file -print -exec rm '{}' \; -exec cvs remove '{}' \;
-	fi
-    done
-    cvs_status
-
-    if [ ! -z "$new" ] && [ -z "$removed" ]; then
 	cvs_status
+    
+	if [ ! -z "$new" ] && [ -z "$removed" ]; then
+	    cvs_status
+	fi
+    else
+	git status -s . || true
+	# Note: Quotes around $() do not impact quotes in the command inside
+	new_files="$(git status -s . | awk -v p=$port '$1 == "??" && $2 ~ p { print $2 }')"
+	for file in $new_files; do
+	    printf "Add $file? [y]/n "
+	    read add_file
+	    if [ 0"$add_file" != 0n ]; then
+		git add $file
+	    fi
+	done
     fi
 fi
-
-pause
 
 # Why was this here? I think pkg-check takes care of this now.
 # pkg_dir=`pwd | awk -F / '{ printf("%s/%s", $(NF-1), $NF); }'`
