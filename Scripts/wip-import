@@ -140,10 +140,10 @@ if [ 0$new_pkg = 0yes ]; then
 	find . \! -name CVS -and \! -name . -exec cvs add '{}' \;
     fi
 else
-    cvs_status
     printf "Checking for new and deleted files...\n"
     
     if [ $vcs = cvs ]; then
+	cvs_status
 	# cvs status does not show files in unadded directories
 	# so repeat after adding directories
 	again=yes
